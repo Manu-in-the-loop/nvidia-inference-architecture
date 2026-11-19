@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Weight sharding and the prompt path",
+    "locale": "en",
+    "output": "diagrams/parallelism.html",
+    "quality_profile": "showcase"
+  },
+  "layout": { "mode": "grid", "cols": 5, "gapX": 48, "gapY": 40, "cellW": 160, "cellH": 72 },
+  "components": [
+    { "id": "prompt", "type": "external", "label": "Prompt", "sublabel": "one developer", "row": 0, "col": 0 },
+    { "id": "router", "type": "backend", "label": "KV router", "sublabel": "same replica", "row": 0, "col": 1 },
+    { "id": "attn", "type": "backend", "label": "Attention", "sublabel": "DP or DCP", "row": 0, "col": 2 },
+    { "id": "experts", "type": "backend", "label": "Experts", "sublabel": "sharded MoE", "row": 0, "col": 3 },
+    { "id": "tokens", "type": "external", "label": "Token stream", "sublabel": "tool deltas", "row": 0, "col": 4 },
+    { "id": "kv", "type": "database", "label": "KV shard", "sublabel": "this GPU", "row": 1, "col": 2 }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "One replica inside the rack", "wraps": ["router", "attn", "experts", "kv"], "pad": 16 }
+  ],
+  "connections": [
+    { "from": "prompt", "to": "router", "label": "session key", "variant": "emphasis" },
+    { "from": "router", "to": "attn", "label": "local rank", "variant": "emphasis" },
+    { "from": "attn", "to": "kv", "label": "read", "variant": "dashed" },
+    { "from": "attn", "to": "experts", "label": "all-to-all", "variant": "emphasis" },
+    { "from": "experts", "to": "tokens", "label": "next token", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "GLM-5.3, 8 GPUs", "items": ["Attention is data parallel: each GPU holds its own developers", "Routed experts are sharded across the 8 GPUs", "The shared expert and non-expert weights are replicated", "Engine: vLLM under Dynamo, NVFP4 weights, FP8 KV"] },
+    { "dot": "violet", "title": "Kimi K3, 16 GPUs", "items": ["Attention is context parallel: the KV is split across the 16 ranks", "Experts use the TensorRT-LLM TEP16 layout", "Each rank reads its 115 GB weight slice every step", "Engine: TensorRT-LLM under Dynamo"] },
+    { "dot": "amber", "title": "What stays together", "items": ["A replica does not cross racks", "A cache hit returns to the rank that holds the prefix", "A cache miss prefills on that same replica"] }
+  ]
+}

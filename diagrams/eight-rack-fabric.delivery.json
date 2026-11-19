@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "9b9dc1ae-2dd8-41a7-babf-9f27c01bb72a",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/eight-rack-fabric.architecture.json",
+  "output": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/eight-rack-fabric.html",
+  "specification": {
+    "sha256": "06aea958b9eaf7a4a2c0de8afa29a78999db61006f6a2c997b13d14de9f05dd0",
+    "bytes": 2258
+  },
+  "artifact": {
+    "sha256": "a6a242b2b68a923ab766a5915d38975b3c28f9acd9474e7226399a19891db70f",
+    "bytes": 838060
+  }
+}

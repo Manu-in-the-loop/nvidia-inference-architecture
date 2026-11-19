@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Coding-Agent Serving Stack",
+    "locale": "en",
+    "output": "diagrams/software-architecture.html",
+    "quality_profile": "showcase"
+  },
+  "layout": { "mode": "grid", "cols": 4, "gapX": 36, "gapY": 34, "cellW": 156, "cellH": 70 },
+  "components": [
+    { "id": "ide", "type": "external", "label": "Coding IDE", "sublabel": "Claude, Open, Roo, Cline", "row": 1, "col": 0 },
+    { "id": "gw", "type": "security", "label": "Gateway API", "sublabel": "both tool protocols", "row": 1, "col": 1 },
+    { "id": "sso", "type": "security", "label": "Keycloak", "sublabel": "developer token", "row": 0, "col": 1 },
+    { "id": "spire", "type": "security", "label": "SPIRE", "sublabel": "CPU workload ID", "row": 2, "col": 1 },
+    { "id": "front", "type": "backend", "label": "Dynamo front", "sublabel": "session key", "row": 1, "col": 2 },
+    { "id": "workers", "type": "backend", "label": "Dynamo workers", "sublabel": "vLLM or TRT-LLM", "row": 1, "col": 3 },
+    { "id": "nixl", "type": "messagebus", "label": "NIXL", "sublabel": "KV on NVLink", "row": 0, "col": 3 },
+    { "id": "guard", "type": "security", "label": "Guardrails", "sublabel": "not per token", "row": 0, "col": 2 },
+    { "id": "eval", "type": "external", "label": "AIPerf", "sublabel": "TTFT and ITL", "row": 2, "col": 2 },
+    { "id": "sched", "type": "cloud", "label": "Grove and KAI", "sublabel": "whole replica", "row": 2, "col": 3 }
+  ],
+  "boundaries": [
+    { "kind": "security-group", "label": "mTLS stops here", "wraps": ["gw", "sso", "spire", "front", "guard", "eval"], "pad": 12 },
+    { "kind": "region", "label": "GPU rack, no sidecar", "wraps": ["workers", "nixl", "sched"], "pad": 12 }
+  ],
+  "connections": [
+    { "from": "ide", "to": "gw", "label": "HTTPS tools", "variant": "emphasis" },
+    { "from": "gw", "to": "sso", "label": "OIDC", "variant": "security" },
+    { "from": "spire", "to": "gw", "label": "SPIFFE", "variant": "security" },
+    { "from": "spire", "to": "front", "label": "SPIFFE", "variant": "security" },
+    { "from": "gw", "to": "front", "label": "session key", "variant": "emphasis" },
+    { "from": "guard", "to": "gw", "label": "policy", "variant": "dashed" },
+    { "from": "front", "to": "workers", "label": "KV-aware", "variant": "emphasis" },
+    { "from": "workers", "to": "nixl", "label": "suffix KV", "variant": "dashed" },
+    { "from": "sched", "to": "workers", "label": "same rack", "variant": "default" },
+    { "from": "eval", "to": "front", "label": "probe", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Engines", "items": ["GLM-5.3 is vLLM, NVFP4, 8 GPUs", "Kimi K3 is TensorRT-LLM, 16 GPUs", "Dynamo owns routing either way"] },
+    { "dot": "rose", "title": "Trust boundary", "items": ["Keycloak authenticates the developer", "SPIRE authenticates CPU services", "RoCE and NVLink have no mesh proxy"] },
+    { "dot": "amber", "title": "Steady state", "items": ["Aggregated workers and chunked prefill", "A separate prefill pool is for cold 1M only", "Prefix affinity stays inside the rack"] }
+  ]
+}

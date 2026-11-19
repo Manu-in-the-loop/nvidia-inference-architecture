@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "cf5d9270-cf2f-456b-afa8-dca34d5e5f32",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/tool-turn-sequence.sequence.json",
+  "output": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/tool-turn-sequence.html",
+  "specification": {
+    "sha256": "7ccfc7f5694ffdaf6355a6bb58d7e87d6f73d036968e078b52c74063d4703112",
+    "bytes": 2158
+  },
+  "artifact": {
+    "sha256": "1ced7d8ed67a95d54a4ed349dbf95026bce558459e2648ff34b2db513d30b33c",
+    "bytes": 831649
+  }
+}

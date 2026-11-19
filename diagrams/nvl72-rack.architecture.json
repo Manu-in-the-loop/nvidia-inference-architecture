@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "One NVL72 Rack",
+    "locale": "en",
+    "output": "diagrams/nvl72-rack.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 3,
+    "gapX": 48,
+    "gapY": 36,
+    "cellW": 168,
+    "cellH": 72
+  },
+  "components": [
+    {
+      "id": "trays",
+      "type": "cloud",
+      "label": "18 trays",
+      "sublabel": "4 GPUs each",
+      "row": 2,
+      "col": 1
+    },
+    {
+      "id": "nvlink",
+      "type": "messagebus",
+      "label": "NVLink spine",
+      "sublabel": "9 switch trays",
+      "row": 0,
+      "col": 1
+    },
+    {
+      "id": "domain",
+      "type": "backend",
+      "label": "72-GPU domain",
+      "sublabel": "one NVLink rack",
+      "row": 1,
+      "col": 1
+    },
+    {
+      "id": "grace",
+      "type": "database",
+      "label": "Grace memory",
+      "sublabel": "LPDDR offload",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "cx",
+      "type": "cloud",
+      "label": "ConnectX-8",
+      "sublabel": "east-west RoCE",
+      "row": 1,
+      "col": 2
+    },
+    {
+      "id": "bf",
+      "type": "security",
+      "label": "BlueField",
+      "sublabel": "north-south",
+      "row": 2,
+      "col": 2
+    },
+    {
+      "id": "nvme",
+      "type": "database",
+      "label": "Tray NVMe",
+      "sublabel": "weight cache",
+      "row": 0,
+      "col": 0
+    },
+    {
+      "id": "power",
+      "type": "cloud",
+      "label": "Power shelves",
+      "sublabel": "busbar, liquid cooled",
+      "row": 2,
+      "col": 0
+    },
+    {
+      "id": "oob",
+      "type": "external",
+      "label": "BMC and OOB",
+      "sublabel": "separate network",
+      "row": 4,
+      "col": 0
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "One NVL72 rack",
+      "wraps": [
+        "trays",
+        "nvlink",
+        "domain",
+        "grace",
+        "cx",
+        "bf",
+        "nvme",
+        "power"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "from": "trays",
+      "to": "domain",
+      "label": "NVLink",
+      "variant": "emphasis"
+    },
+    {
+      "from": "nvlink",
+      "to": "domain",
+      "label": "full bipartite",
+      "variant": "emphasis"
+    },
+    {
+      "from": "domain",
+      "to": "grace",
+      "label": "KV offload",
+      "variant": "dashed"
+    },
+    {
+      "from": "domain",
+      "to": "cx",
+      "label": "RoCEv2",
+      "variant": "emphasis"
+    },
+    {
+      "from": "trays",
+      "to": "bf",
+      "label": "in-band",
+      "variant": "default"
+    },
+    {
+      "from": "nvme",
+      "to": "domain",
+      "label": "weights",
+      "variant": "dashed"
+    },
+    {
+      "from": "oob",
+      "to": "trays",
+      "label": "management",
+      "variant": "security"
+    },
+    {
+      "from": "power",
+      "to": "trays",
+      "label": "busbar",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "GB300 tray",
+      "items": [
+        "4 B300 GPUs, 288 GB HBM3e each",
+        "4 ConnectX-8 at 800 Gb/s per GPU",
+        "BlueField-3 for north-south",
+        "Operating rack power used here is 140 kW"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Vera Rubin tray",
+      "items": [
+        "4 Rubin GPUs in the same 18-tray rack",
+        "2x800 Gb/s ConnectX-9 per GPU",
+        "BlueField-4 at 800 Gb/s north-south",
+        "Brochure operating power is 220 kW"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "What stays in the rack",
+      "items": [
+        "A model replica and its KV",
+        "Expert and attention traffic",
+        "NIXL moves for a tool-turn suffix"
+      ]
+    }
+  ]
+}

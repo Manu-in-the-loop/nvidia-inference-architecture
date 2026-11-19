@@ -1,0 +1,69 @@
+{
+  "platforms": {
+    "gb300": {
+      "gpus_per_rack": 72,
+      "hbm_gb_decimal_per_gpu": 288,
+      "hbm_bandwidth_tb_per_rack": 576,
+      "nvlink_tb_per_rack": 130,
+      "roce_gbps_per_gpu": 800,
+      "host_memory_tb": 17,
+      "host_or_c2c_bandwidth_tb_per_rack": 14,
+      "operating_power_kw": 140,
+      "dense_nvfp4_pflops_per_rack": 1080
+    },
+    "rubin": {
+      "gpus_per_rack": 72,
+      "hbm_tb_per_rack": 20.7,
+      "hbm_bandwidth_tb_per_rack": 1580,
+      "nvlink_tb_per_rack": 260,
+      "roce_gbps_per_gpu": 1600,
+      "host_memory_tb": 54,
+      "host_or_c2c_bandwidth_tb_per_rack": 65,
+      "operating_power_kw": 220,
+      "dense_nvfp4_pflops_per_rack": 3600
+    }
+  },
+  "runtime": {
+    "hbm_overhead_gb_decimal_per_gpu": 16,
+    "prefill_efficiency": 0.35,
+    "host_memory_usable_fraction": 0.7
+  },
+  "glm": {
+    "active_params": 40000000000,
+    "layers": 78,
+    "full_indexer_layers": 21,
+    "kv_lora_rank": 512,
+    "qk_rope_head_dim": 64,
+    "index_head_dim": 128,
+    "index_topk": 2048,
+    "routed_experts": 256,
+    "shared_experts": 1,
+    "experts_per_token": 8,
+    "moe_layers": 75,
+    "replica_gpus": 8,
+    "spare_replicas_per_rack": 1,
+    "checkpoint_bytes": 464185032918,
+    "bf16_params": 27874712576,
+    "fp8_params": 679477248,
+    "fp32_params": 19456
+  },
+  "kimi": {
+    "active_params": 104000000000,
+    "mla_layers": 24,
+    "kda_layers": 69,
+    "kda_heads": 96,
+    "kda_head_dim": 128,
+    "kv_lora_rank": 512,
+    "qk_rope_head_dim": 64,
+    "replica_gpus": 16,
+    "spare_replicas_per_rack": 0,
+    "weight_gb_decimal_per_rank": 115,
+    "calibration": {
+      "gpus": 16,
+      "batch": 4,
+      "context_tokens": 8192,
+      "tpot_ms": 18.12,
+      "source": "TensorRT-LLM Kimi K3 guide, TEP16, GB300, 8k/1k sweep"
+    }
+  }
+}

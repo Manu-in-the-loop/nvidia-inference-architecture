@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "f38a2ba3-91d7-498c-a3e5-d2dcbd56aba3",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/request-flow.workflow.json",
+  "output": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/request-flow.html",
+  "specification": {
+    "sha256": "7e8f5f6c22520282cd97fca7dcfd6fb328ccf829631f132fc62ea48d77f02a44",
+    "bytes": 3463
+  },
+  "artifact": {
+    "sha256": "d50ffd01c0c1fd92d373442219b316d67327d58868c258abcea37a20e6327ad9",
+    "bytes": 844134
+  }
+}

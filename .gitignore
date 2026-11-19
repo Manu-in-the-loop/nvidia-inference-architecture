@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.DS_Store
+diagrams/review-*/
+diagrams/*.finalize.json
+diagrams/*.finalize-summary.json
+diagrams/*.browser-check.json
+diagrams/.archify-delivery-lock.json

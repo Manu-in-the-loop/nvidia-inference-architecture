@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "7b220d79-1b08-4aa0-9988-bfbedbb8688f",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/scalable-unit-fabric.architecture.json",
+  "output": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/scalable-unit-fabric.html",
+  "specification": {
+    "sha256": "5ffdf8618d11a3797dd1c3ba0d2768b284b88e53daddc55718d05f8f403a1055",
+    "bytes": 2364
+  },
+  "artifact": {
+    "sha256": "d3ab4777081205cd4fc1b37400045ff510c1b228316ba72160aef944288c816b",
+    "bytes": 840056
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Eight-Rack GB300 Fabric",
+    "locale": "en",
+    "output": "diagrams/eight-rack-fabric.html",
+    "quality_profile": "showcase"
+  },
+  "layout": { "mode": "grid", "cols": 4, "gapX": 52, "gapY": 36, "cellW": 180, "cellH": 72 },
+  "components": [
+    { "id": "spine", "type": "messagebus", "label": "Spine", "sublabel": "cross-rail", "row": 0, "col": 0 },
+    { "id": "super", "type": "messagebus", "label": "Super-spine", "sublabel": "eight-unit tier", "row": 0, "col": 1 },
+    { "id": "leaf", "type": "cloud", "label": "Rail leaves", "sublabel": "one hop in a rail", "row": 1, "col": 0 },
+    { "id": "domain", "type": "backend", "label": "8 NVL72 racks", "sublabel": "576 GPUs", "row": 1, "col": 1 },
+    { "id": "store", "type": "database", "label": "Storage fabric", "sublabel": "RoCE, not compute", "row": 0, "col": 3 },
+    { "id": "edge", "type": "security", "label": "Tenant access", "sublabel": "gateway only", "row": 1, "col": 3 }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Tested GB300 Spectrum-X domain", "wraps": ["domain", "leaf", "spine", "super"], "pad": 16 }
+  ],
+  "connections": [
+    { "from": "domain", "to": "leaf", "label": "RoCEv2 rail", "variant": "emphasis" },
+    { "from": "leaf", "to": "spine", "label": "cross-rail", "variant": "emphasis" },
+    { "from": "spine", "to": "super", "label": "eight-unit", "variant": "default" },
+    { "from": "domain", "to": "store", "label": "GPUDirect", "variant": "dashed" },
+    { "from": "edge", "to": "domain", "label": "no GPU RoCE", "variant": "security" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Why eight", "items": ["The GB300 enterprise RA tests 1, 2, 4, and 8 racks", "Past 8 racks is a new fabric domain", "Seat math uses 8 times one rack, times 0.97"] },
+    { "dot": "violet", "title": "Rubin is a different quantum", "items": ["A SuperPOD unit is 3 racks, not 1", "Eight Rubin racks are a comparison, not a SKU", "Buy 6 or 9 racks to land on a unit boundary"] },
+    { "dot": "amber", "title": "What this picture is not", "items": ["Not a drawing of every switch port", "Not the path a cached tool turn takes", "That turn stays inside one rack's NVLink domain"] }
+  ]
+}

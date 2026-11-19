@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "d402fbf7-3355-4cec-9698-ccb866df9400",
+  "status": "current",
+  "command": "deliver",
+  "type": "dataflow",
+  "input": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/kv-and-weights.dataflow.json",
+  "output": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/kv-and-weights-dataflow.html",
+  "specification": {
+    "sha256": "632c488abb4274d9771fb5c00c814463a1fa87535df8a563f62cc18478343b9f",
+    "bytes": 2343
+  },
+  "artifact": {
+    "sha256": "1204dce4ebd17c4b73b93647a9a654fcbb708aca32f09ff463ff35b42f7c90ed",
+    "bytes": 832691
+  }
+}

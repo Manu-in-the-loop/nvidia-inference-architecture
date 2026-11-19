@@ -1,0 +1,46 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Prompt path, hit and miss",
+    "locale": "en",
+    "output": "diagrams/request-flow.html",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "client", "label": "Developer" },
+    { "id": "edge", "label": "Edge" },
+    { "id": "serve", "label": "Dynamo" },
+    { "id": "state", "label": "KV and records" }
+  ],
+  "mainPath": ["ide", "gateway", "dynamo", "decode"],
+  "nodes": [
+    { "id": "ide", "lane": "client", "col": 0, "type": "external", "label": "Agent IDE", "sublabel": "tool turn" },
+    { "id": "gateway", "lane": "edge", "col": 1, "type": "security", "label": "Gateway", "sublabel": "both APIs" },
+    { "id": "sso", "lane": "edge", "col": 2, "type": "security", "label": "Keycloak", "sublabel": "developer token" },
+    { "id": "guard", "lane": "edge", "col": 0, "type": "security", "label": "Guardrails", "sublabel": "request policy" },
+    { "id": "dynamo", "lane": "serve", "col": 2, "type": "backend", "label": "Dynamo", "sublabel": "session key" },
+    { "id": "prefill", "lane": "serve", "col": 3, "type": "backend", "label": "Prefill", "sublabel": "cold context" },
+    { "id": "decode", "lane": "serve", "col": 4, "type": "backend", "label": "Decode", "sublabel": "vLLM or TRT" },
+    { "id": "kv", "lane": "state", "col": 3, "type": "database", "label": "HBM cache", "sublabel": "hot prefix" },
+    { "id": "grace", "lane": "state", "col": 4, "type": "database", "label": "Grace KV", "sublabel": "paused copy" },
+    { "id": "logs", "lane": "state", "col": 1, "type": "external", "label": "Prompt log", "sublabel": "text and timing" }
+  ],
+  "edges": [
+    { "id": "submit", "from": "ide", "to": "gateway", "label": "prompt", "variant": "emphasis", "role": "main" },
+    { "id": "auth", "from": "gateway", "to": "sso", "label": "OIDC", "variant": "security", "role": "branch" },
+    { "id": "policy", "from": "gateway", "to": "guard", "label": "check", "variant": "security", "role": "branch" },
+    { "id": "admit", "from": "gateway", "to": "dynamo", "label": "admitted", "variant": "emphasis", "role": "main" },
+    { "id": "hit", "from": "dynamo", "to": "decode", "label": "cache hit", "variant": "emphasis", "role": "main" },
+    { "id": "miss", "from": "dynamo", "to": "prefill", "label": "cache miss", "variant": "default", "role": "branch" },
+    { "id": "fill", "from": "prefill", "to": "kv", "label": "write KV", "variant": "default", "role": "branch" },
+    { "id": "hand", "from": "kv", "to": "decode", "label": "NIXL", "variant": "emphasis", "role": "branch" },
+    { "id": "park", "from": "decode", "to": "grace", "label": "pause", "variant": "dashed", "role": "async" },
+    { "id": "record", "from": "gateway", "to": "logs", "label": "record", "variant": "dashed", "role": "async" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Cache hit", "items": ["The session key returns the worker that holds the prefix", "Only the new suffix is prefilled", "Tokens and tool-call deltas stream back"] },
+    { "dot": "amber", "title": "Cache miss", "items": ["A cold 200k or 1M context is prefilled on that replica", "NIXL places the new KV on the decode worker", "The first token time is the cold figure in the table"] },
+    { "dot": "cyan", "title": "Records", "items": ["Keycloak identifies the developer", "The prompt, the decision, and token timings are logged", "Guardrails run on the request, not on each output token"] }
+  ]
+}

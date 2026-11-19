@@ -1,0 +1,37 @@
+# Coding-agent traffic shared by both context scenarios.
+# The 30k / 2.5k / 400 turn shape is a hypothesis taken from a harness
+# comparison checked on 27 October 2026. It is used for prefill time, not
+# for the KV reservation. Admission reserves the full context below.
+turn:
+  stable_prefix_tokens: 30000
+  uncached_suffix_tokens: 2500
+  output_tokens_per_turn: 400
+slo:
+  tokens_per_second_per_developer: 50
+  cache_hit_ttft_seconds: 1.0
+scenarios:
+  - id: ctx-200k
+    label: "200k reserved"
+    context_tokens: 200000
+  - id: ctx-1m
+    label: "1M reserved"
+    context_tokens: 1048576
+scaling:
+  # Replicas stay inside one rack. These factors cover scheduling imbalance only.
+  three_rack_factor: 0.98
+  eight_rack_factor: 0.97
+usage:
+  # TraceLab, per request: LLM generation is 41.0% of response time, tools 59.8%.
+  # https://arxiv.org/html/2606.30560v2
+  generation_share_of_active_turn: 0.410
+  # Same paper, human gaps capped at 1 hour: generation 14.5% + tools 21.2%.
+  active_turn_share_of_hour: 0.357
+  # Copilot production traces: median LLM calls in flight per turn.
+  # https://arxiv.org/html/2608.00101
+  requests_per_developer: 1.15
+policy:
+  # These times describe cache placement. They do not change the seat count.
+  # Edit them when the operating policy changes. The report repeats them.
+  tool_gap_keep_in_hbm_seconds: 60
+  pause_offload_to_grace_minutes: 15
+  away_evict_to_nvme_minutes: 15

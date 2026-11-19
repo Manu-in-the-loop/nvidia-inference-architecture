@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "a1279e73-d7e0-4500-88d3-c2f1d9e0ba6e",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/infrastructure.architecture.json",
+  "output": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/infrastructure.html",
+  "specification": {
+    "sha256": "140d5bd5a45205a5c9e6c8e50dc90de0e03cbcd79f880179e3694d92d3a196ad",
+    "bytes": 3356
+  },
+  "artifact": {
+    "sha256": "2be44c0f1d6dc97d3a808bbc5cd8fecba569e198187dcc5fe2451f57d2566e8f",
+    "bytes": 842420
+  }
+}

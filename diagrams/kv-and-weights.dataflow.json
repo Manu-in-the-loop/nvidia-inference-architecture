@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Weights, Reserved KV, and Telemetry",
+    "locale": "en",
+    "output": "diagrams/kv-and-weights-dataflow.html",
+    "quality_profile": "showcase",
+    "visual_preset": "signal-flow"
+  },
+  "stages": [
+    { "label": "Source" },
+    { "label": "Rack cache" },
+    { "label": "HBM" },
+    { "label": "Off the GPU" }
+  ],
+  "nodes": [
+    { "id": "store", "type": "database", "label": "Checkpoints", "sublabel": "NVFP4 or MXFP4", "stage": 0, "row": 0 },
+    { "id": "metrics", "type": "external", "label": "AIPerf", "sublabel": "TTFT and ITL", "stage": 0, "row": 2 },
+    { "id": "nvme", "type": "database", "label": "Tray NVMe", "sublabel": "ModelExpress", "stage": 1, "row": 0 },
+    { "id": "grace", "type": "database", "label": "Grace memory", "sublabel": "parked KV", "stage": 1, "row": 2 },
+    { "id": "hbm", "type": "backend", "label": "HBM cache", "sublabel": "full context", "stage": 2, "row": 1 },
+    { "id": "roce", "type": "messagebus", "label": "RoCE hop", "sublabel": "not the hot path", "stage": 3, "row": 1 }
+  ],
+  "flows": [
+    { "from": "store", "to": "nvme", "label": "weights", "variant": "emphasis", "route": "straight" },
+    { "from": "nvme", "to": "hbm", "label": "load rank", "variant": "emphasis", "route": "straight" },
+    { "from": "hbm", "to": "grace", "label": "idle KV", "variant": "dashed", "route": "straight" },
+    { "from": "grace", "to": "hbm", "label": "recall", "variant": "default", "route": "straight" },
+    { "from": "hbm", "to": "metrics", "label": "decode SLIs", "variant": "dashed", "route": "straight" },
+    { "from": "hbm", "to": "roce", "label": "avoid", "variant": "security", "route": "straight" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "What HBM holds", "items": ["GLM is about 9.4 GiB at 200k and 49 GiB at 1M", "Kimi is about 3 GiB at 200k and 14 GiB at 1M", "The seat count reserves that whole object"] },
+    { "dot": "emerald", "title": "Recall", "items": ["Every case in the model recalls inside one second", "Recall does not add simultaneous decode seats", "A full rack of active turns still needs HBM and bandwidth"] },
+    { "dot": "rose", "title": "RoCE", "items": ["A 1M GLM cache is about 0.53 s on GB300 RoCE", "That spends the TTFT budget", "Keep the live prefix on NVLink"] }
+  ]
+}

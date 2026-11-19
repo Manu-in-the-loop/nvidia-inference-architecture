@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Scalable Unit on Spectrum-X",
+    "locale": "en",
+    "output": "diagrams/scalable-unit-fabric.html",
+    "quality_profile": "showcase"
+  },
+  "layout": { "mode": "grid", "cols": 4, "gapX": 44, "gapY": 40, "cellW": 176, "cellH": 74 },
+  "components": [
+    { "id": "leaf", "type": "cloud", "label": "Compute leaves", "sublabel": "rail-optimized", "row": 0, "col": 0 },
+    { "id": "plane", "type": "messagebus", "label": "Dual-plane RoCE", "sublabel": "Spectrum-X", "row": 0, "col": 1 },
+    { "id": "su", "type": "backend", "label": "NVL72 unit", "sublabel": "NVLink stays inside", "row": 1, "col": 0 },
+    { "id": "core", "type": "security", "label": "Control cluster", "sublabel": "gateway and SSO", "row": 0, "col": 3 },
+    { "id": "storage", "type": "database", "label": "Storage leaves", "sublabel": "checkpoints", "row": 1, "col": 3 },
+    { "id": "oob", "type": "external", "label": "OOB switches", "sublabel": "BMC and PDUs", "row": 2, "col": 3 }
+  ],
+  "boundaries": [
+    { "kind": "security-group", "label": "East-west RoCEv2", "wraps": ["su", "leaf", "plane"], "pad": 14 },
+    { "kind": "region", "label": "North-south and management", "wraps": ["storage", "core", "oob"], "pad": 14 }
+  ],
+  "connections": [
+    { "from": "su", "to": "leaf", "label": "ConnectX rail", "variant": "emphasis" },
+    { "from": "leaf", "to": "plane", "label": "800 Gb/s", "variant": "emphasis" },
+    { "from": "su", "to": "storage", "label": "BlueField", "variant": "default" },
+    { "from": "storage", "to": "core", "label": "model artifacts", "variant": "dashed" },
+    { "from": "core", "to": "su", "label": "admitted turns", "variant": "security" },
+    { "from": "oob", "to": "su", "label": "out of band", "variant": "security" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "GB300 unit", "items": ["One rack is one scalable unit", "Four ConnectX-8 rails per tray", "Tested alone or as 2, 4, or 8 units"] },
+    { "dot": "violet", "title": "Rubin unit", "items": ["Three racks, 216 GPUs", "Two 800 Gb/s ports per GPU", "Two planes, traffic in-unit is one hop on a rail"] },
+    { "dot": "rose", "title": "Traffic split", "items": ["Hot KV does not cross this fabric", "RoCE carries weights, storage, and new replicas", "Developer TLS stops at the control cluster"] }
+  ]
+}

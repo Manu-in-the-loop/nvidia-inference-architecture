@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Cache-Hit Tool Turn",
+    "locale": "en",
+    "output": "diagrams/tool-turn-sequence.html",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    { "id": "ide", "type": "external", "label": "IDE", "sublabel": "tool loop" },
+    { "id": "gw", "type": "security", "label": "Gateway", "sublabel": "admission" },
+    { "id": "sso", "type": "security", "label": "Keycloak", "sublabel": "OIDC" },
+    { "id": "dyn", "type": "backend", "label": "Dynamo", "sublabel": "KV router" },
+    { "id": "worker", "type": "backend", "label": "Worker", "sublabel": "prefix resident" }
+  ],
+  "messages": [
+    { "id": "turn", "from": "ide", "to": "gw", "y": 168, "label": "tool result + token", "variant": "emphasis" },
+    { "id": "check", "from": "gw", "to": "sso", "y": 190, "label": "introspect token", "variant": "security" },
+    { "id": "ok", "from": "sso", "to": "gw", "y": 226, "label": "developer ok", "variant": "return" },
+    { "id": "route", "from": "gw", "to": "dyn", "y": 266, "label": "session key", "variant": "emphasis" },
+    { "id": "pick", "from": "dyn", "to": "worker", "y": 306, "label": "same prefix worker", "variant": "emphasis" },
+    { "id": "stream", "from": "worker", "to": "dyn", "y": 346, "label": "tokens and tool deltas", "variant": "return" },
+    { "id": "back", "from": "dyn", "to": "gw", "y": 382, "label": "SSE", "variant": "return" },
+    { "id": "ideback", "from": "gw", "to": "ide", "y": 418, "label": "native tool stream", "variant": "return" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "This turn", "items": ["Only the new suffix is prefilled", "The model puts that under 50 ms", "NVLink suffix transfer is under 0.1 ms"] },
+    { "dot": "amber", "title": "Cold start, not drawn", "items": ["200k or 1M is prefilled once per session", "GB300 cold 1M is about 2 to 3 seconds here", "Rubin cold 1M stays under one second in the same estimate"] },
+    { "dot": "cyan", "title": "Clients", "items": ["Claude Code uses /v1/messages", "OpenCode, Roo, and Cline use /v1/chat/completions", "Roo streams native tool-call arguments"] }
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Rack, network, and KV placement",
+    "locale": "en",
+    "output": "diagrams/infrastructure.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 4,
+    "gapX": 56,
+    "gapY": 44,
+    "cellW": 168,
+    "cellH": 72
+  },
+  "components": [
+    {
+      "id": "control",
+      "type": "security",
+      "label": "Control plane",
+      "sublabel": "gateway and SSO",
+      "row": 0,
+      "col": 0
+    },
+    {
+      "id": "nvlink",
+      "type": "messagebus",
+      "label": "NVLink",
+      "sublabel": "inside the rack",
+      "row": 0,
+      "col": 1
+    },
+    {
+      "id": "racks",
+      "type": "backend",
+      "label": "NVL72 compute",
+      "sublabel": "72 GPUs",
+      "row": 1,
+      "col": 1
+    },
+    {
+      "id": "grace",
+      "type": "database",
+      "label": "Grace memory",
+      "sublabel": "paused KV",
+      "row": 2,
+      "col": 1
+    },
+    {
+      "id": "nvme",
+      "type": "database",
+      "label": "Rack NVMe",
+      "sublabel": "evicted KV",
+      "row": 2,
+      "col": 2
+    },
+    {
+      "id": "fabric",
+      "type": "cloud",
+      "label": "Spectrum-X",
+      "sublabel": "RoCEv2",
+      "row": 0,
+      "col": 3
+    },
+    {
+      "id": "weights",
+      "type": "database",
+      "label": "Weight store",
+      "sublabel": "checkpoints",
+      "row": 2,
+      "col": 0
+    },
+    {
+      "id": "logs",
+      "type": "external",
+      "label": "Telemetry",
+      "sublabel": "prompts and SLOs",
+      "row": 1,
+      "col": 3
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "One NVL72 rack",
+      "wraps": [
+        "nvlink",
+        "racks",
+        "grace",
+        "nvme"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "from": "control",
+      "to": "racks",
+      "label": "admitted turn",
+      "variant": "emphasis"
+    },
+    {
+      "from": "nvlink",
+      "to": "racks",
+      "label": "scale-up",
+      "variant": "emphasis"
+    },
+    {
+      "from": "racks",
+      "to": "grace",
+      "label": "pause",
+      "variant": "dashed"
+    },
+    {
+      "from": "grace",
+      "to": "nvme",
+      "label": "evict",
+      "variant": "dashed"
+    },
+    {
+      "from": "weights",
+      "to": "racks",
+      "label": "load",
+      "variant": "default"
+    },
+    {
+      "from": "racks",
+      "to": "fabric",
+      "label": "RoCE",
+      "variant": "emphasis"
+    },
+    {
+      "from": "racks",
+      "to": "logs",
+      "label": "records",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "While the turn is active",
+      "items": [
+        "KV stays in HBM",
+        "A tool gap under 60 seconds does not move it",
+        "NVLink carries expert and attention traffic"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "When the developer steps away",
+      "items": [
+        "Up to 15 minutes: offload to Grace",
+        "Longer: write the KV to rack NVMe",
+        "The GPU seat is released"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "When work resumes",
+      "items": [
+        "A Grace copy is loaded back if the pause is under 15 minutes",
+        "An NVMe copy is a logged admission",
+        "Prompt text and token timings go to telemetry"
+      ]
+    }
+  ]
+}

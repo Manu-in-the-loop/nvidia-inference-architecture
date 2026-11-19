@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "e5afba35-dc2b-4b46-b426-9cb2c2ba78a2",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/nvl72-rack.architecture.json",
+  "output": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/nvl72-rack.html",
+  "specification": {
+    "sha256": "fa635529f66574c53677c623883cfbbc4c372d3ba213ad221658049dd5c35cec",
+    "bytes": 3699
+  },
+  "artifact": {
+    "sha256": "595d745897a0a67fcd254ff2ccc59cbb7290e11f8323e60fe0991ee0a5c7183e",
+    "bytes": 844404
+  }
+}
