@@ -78,9 +78,9 @@ Cache times are policy. They live in `scenarios.yaml` under `policy` and do not 
 
 Diagrams, each an HTML file with its JSON source beside it:
 
-- [Rack, network, and KV placement](../diagrams/infrastructure.html)
-- [Prompt path, hit and miss](../diagrams/request-flow.html)
-- [Weight sharding and the prompt path](../diagrams/parallelism.html)
+- [Rack, network, and KV placement](https://manu-in-the-loop.github.io/nvidia-inference-architecture/diagrams/infrastructure.html)
+- [Prompt path, hit and miss](https://manu-in-the-loop.github.io/nvidia-inference-architecture/diagrams/request-flow.html)
+- [Weight sharding and the prompt path](https://manu-in-the-loop.github.io/nvidia-inference-architecture/diagrams/parallelism.html)
 
 A developer sends a prompt from the IDE. Claude Code uses `POST /v1/messages`. OpenCode, Roo Code, and Cline use `POST /v1/chat/completions` with native tool-call streaming.
 
