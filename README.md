@@ -1,6 +1,14 @@
-# Coding-agent inference
+# NVIDIA inference reference architecture
 
-Private endpoint for Claude Code, OpenCode, Roo Code, and Cline on GLM-5.3 and Kimi K3. The racks are GB300 NVL72 and Vera Rubin NVL72. NVIDIA Dynamo serves the models.
+Reference architecture, configuration, and sizing for a fully private AI code assistant on current NVIDIA hardware. Developers use Claude Code, OpenCode, Roo Code, or Cline against an endpoint that stays inside the customer's network. NVIDIA Dynamo serves the models.
+
+The exercise compares the choices that change capacity:
+
+- Models: GLM-5.3 and Kimi K3
+- Hardware: GB300 NVL72 and Vera Rubin NVL72
+- Context reserved per developer: 200,000 tokens and the full 1,048,576-token window
+- Purchase size: one rack and three racks
+- Two headcounts from the same hardware: concurrent developers in an active turn, and developers served across a working hour
 
 ## Read this first
 
