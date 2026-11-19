@@ -2,33 +2,74 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Weight sharding and the prompt path",
+    "title": "Kimi K3 on Vera Rubin at 1M",
     "locale": "en",
     "output": "diagrams/parallelism.html",
     "quality_profile": "showcase"
   },
-  "layout": { "mode": "grid", "cols": 5, "gapX": 48, "gapY": 40, "cellW": 160, "cellH": 72 },
   "components": [
-    { "id": "prompt", "type": "external", "label": "Prompt", "sublabel": "one developer", "row": 0, "col": 0 },
-    { "id": "router", "type": "backend", "label": "KV router", "sublabel": "same replica", "row": 0, "col": 1 },
-    { "id": "attn", "type": "backend", "label": "Attention", "sublabel": "DP or DCP", "row": 0, "col": 2 },
-    { "id": "experts", "type": "backend", "label": "Experts", "sublabel": "sharded MoE", "row": 0, "col": 3 },
-    { "id": "tokens", "type": "external", "label": "Token stream", "sublabel": "tool deltas", "row": 0, "col": 4 },
-    { "id": "kv", "type": "database", "label": "KV shard", "sublabel": "this GPU", "row": 1, "col": 2 }
+    { "id": "prompt", "type": "external", "label": "Prompt", "sublabel": "1,048,576 tokens", "pos": [40, 48], "size": [168, 72] },
+    { "id": "router", "type": "backend", "label": "Dynamo router", "sublabel": "one replica", "pos": [308, 48], "size": [176, 72] },
+    { "id": "attn", "type": "backend", "label": "DCP attention", "sublabel": "16 ranks", "tag": "DCP16", "pos": [308, 224], "size": [176, 72] },
+    { "id": "experts", "type": "backend", "label": "TEP16 experts", "sublabel": "expert parallel", "tag": "TRT-LLM", "pos": [584, 224], "size": [184, 72] },
+    { "id": "tokens", "type": "external", "label": "Token stream", "sublabel": "50 tok/s floor", "pos": [920, 224], "size": [168, 72] },
+    { "id": "kv", "type": "database", "label": "KV shard", "sublabel": "0.933 GB / dev", "pos": [308, 406], "size": [176, 72] },
+    { "id": "weight", "type": "database", "label": "Weight slice", "sublabel": "115 GB / rank", "pos": [584, 406], "size": [184, 72] },
+    { "id": "hbm", "type": "database", "label": "Rank HBM", "sublabel": "287.5 GB", "pos": [308, 574], "size": [460, 64] },
+    { "id": "more", "type": "backend", "label": "Replicas 2 to 4", "sublabel": "same 16 GPU shape", "pos": [308, 760], "size": [220, 72] },
+    { "id": "idle", "type": "cloud", "label": "8 GPUs idle", "sublabel": "72 minus 64", "pos": [548, 760], "size": [220, 72] }
   ],
   "boundaries": [
-    { "kind": "region", "label": "One replica inside the rack", "wraps": ["router", "attn", "experts", "kv"], "pad": 16 }
+    { "kind": "region", "label": "Replica 1 of 4, 16 GPUs", "wraps": ["attn", "experts", "kv", "weight", "hbm"], "pad": 18 },
+    { "kind": "region", "label": "Vera Rubin NVL72", "wraps": ["router", "attn", "experts", "kv", "weight", "hbm", "more", "idle"], "pad": 16 }
   ],
   "connections": [
-    { "from": "prompt", "to": "router", "label": "session key", "variant": "emphasis" },
-    { "from": "router", "to": "attn", "label": "local rank", "variant": "emphasis" },
-    { "from": "attn", "to": "kv", "label": "read", "variant": "dashed" },
-    { "from": "attn", "to": "experts", "label": "all-to-all", "variant": "emphasis" },
-    { "from": "experts", "to": "tokens", "label": "next token", "variant": "emphasis" }
+    { "id": "enter", "from": "prompt", "to": "router", "label": "session key", "variant": "emphasis" },
+    { "id": "pick", "from": "router", "to": "attn", "label": "this replica", "variant": "emphasis" },
+    { "id": "dispatch", "from": "attn", "to": "experts", "label": "all-to-all", "variant": "emphasis" },
+    { "id": "emit", "from": "experts", "to": "tokens", "label": "next token", "variant": "emphasis" },
+    { "id": "readkv", "from": "attn", "to": "kv", "label": "local shard", "variant": "dashed" },
+    { "id": "readw", "from": "experts", "to": "weight", "label": "every step", "variant": "dashed" },
+    { "id": "kvmem", "from": "kv", "to": "hbm", "label": "resident", "variant": "default" },
+    { "id": "wmem", "from": "weight", "to": "hbm", "label": "resident", "variant": "default" }
   ],
   "cards": [
-    { "dot": "cyan", "title": "GLM-5.3, 8 GPUs", "items": ["Attention is data parallel: each GPU holds its own developers", "Routed experts are sharded across the 8 GPUs", "The shared expert and non-expert weights are replicated", "Engine: vLLM under Dynamo, NVFP4 weights, FP8 KV"] },
-    { "dot": "violet", "title": "Kimi K3, 16 GPUs", "items": ["Attention is context parallel: the KV is split across the 16 ranks", "Experts use the TensorRT-LLM TEP16 layout", "Each rank reads its 115 GB weight slice every step", "Engine: TensorRT-LLM under Dynamo"] },
-    { "dot": "amber", "title": "What stays together", "items": ["A replica does not cross racks", "A cache hit returns to the rank that holds the prefix", "A cache miss prefills on that same replica"] }
+    {
+      "dot": "cyan",
+      "title": "This row",
+      "items": [
+        "Kimi K3, Vera Rubin NVL72, 1,048,576 tokens reserved per developer",
+        "Four replicas, 16 GPUs each. 64 GPUs serve. Eight GPUs are outside a replica",
+        "TensorRT-LLM under Dynamo. Attention is context parallel. Experts are TEP16"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Weights",
+      "items": [
+        "Each rank holds 115 GB, the published TEP16 weight slice",
+        "One replica holds 1,840 GB. The rack holds 7,360 GB",
+        "Each decode step reads the 115 GB slice on that rank"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "KV cache",
+      "items": [
+        "One developer stores 14.93 GB. 14.50 GB is FP8 MLA. 0.43 GB is KDA state and does not grow with context",
+        "The 14.93 GB is split across 16 ranks, 0.933 GB on each rank",
+        "167 developers fit on a replica, which puts 155.83 GB of KV on the rank",
+        "results.json lists the same cache as 13.90 GiB"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Why memory binds",
+      "items": [
+        "Rank HBM is 287.5 GB: 115 GB weights, 16 GB overhead, 155.83 GB KV, 0.67 GB left",
+        "The rack holds 668 active turns and 580 concurrent developers",
+        "A hot prefix stays on these 16 GPUs. The all-to-all stays on NVLink"
+      ]
+    }
   ]
 }

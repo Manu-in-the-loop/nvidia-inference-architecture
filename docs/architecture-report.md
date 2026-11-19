@@ -79,20 +79,20 @@ Cache times are policy. They live in `scenarios.yaml` under `policy` and do not 
 Diagrams, each an HTML file with its JSON source beside it:
 
 - [Rack, network, and KV placement](https://manu-in-the-loop.github.io/nvidia-inference-architecture/diagrams/infrastructure.html)
-- [Prompt path, hit and miss](https://manu-in-the-loop.github.io/nvidia-inference-architecture/diagrams/request-flow.html)
-- [Weight sharding and the prompt path](https://manu-in-the-loop.github.io/nvidia-inference-architecture/diagrams/parallelism.html)
+- [End to end prompt flow](https://manu-in-the-loop.github.io/nvidia-inference-architecture/diagrams/request-flow.html)
+- [Kimi K3 on Vera Rubin at 1M](https://manu-in-the-loop.github.io/nvidia-inference-architecture/diagrams/parallelism.html)
 
 A developer sends a prompt from the IDE. Claude Code uses `POST /v1/messages`. OpenCode, Roo Code, and Cline use `POST /v1/chat/completions` with native tool-call streaming.
 
-The gateway checks the Keycloak token, applies the context reservation and the rate limit, and runs NeMo Guardrails on the request. Guardrails do not sit on the per-token decode loop. The gateway writes the prompt, the allow or deny decision, and the token timings to the prompt log, then forwards a stable session key to Dynamo.
+The gateway checks the Keycloak token, applies the context reservation and the rate limit, and runs NeMo Guardrails on the request. A deny is logged and stops before Dynamo. SPIRE identifies the gateway and the Dynamo frontend. GPU pods have no sidecar.
 
-On a cache hit, Dynamo returns the turn to the worker that still holds the prefix. Only the new suffix is prefilled. Tokens and tool-call deltas stream back.
+The gateway writes the developer, the prompt, and the allow or deny decision, then forwards a stable session key to the Dynamo frontend. KV events tell the router which worker holds the prefix. On a cache hit the router returns the turn to that worker and only the new suffix is prefilled. On a cache miss the planner sends the cold context to prefill. The KV manager allocates blocks and NIXL places them on the decode worker. A separate prefill worker is used only for that cold admission.
 
-On a cache miss, the reserved context is prefilled on that replica. NIXL places the new KV on the decode worker. The cold first-token times above are this path.
+Decode streams token and tool-call deltas to the frontend. The gateway samples the output and does not check each token. The IDE receives one SSE stream on the API it called. The frontend writes TTFT and token counts on the way out.
 
 While tools run, for less than 60 seconds, the KV stays in HBM. If the developer pauses, Grace holds the copy and the GPU seat can be reused. If the developer is away past 15 minutes, rack NVMe holds the copy. The next prompt is authenticated, logged, and admitted again.
 
-SPIRE identities cover the gateway, Dynamo, and the log path. GPU pods have no mesh sidecar. NVLink and RoCE stay direct.
+NVLink and RoCE stay direct. Identity stops at the CPU services that write the logs.
 
 ## Hardware
 
@@ -106,7 +106,9 @@ GLM-5.3 is served by vLLM under Dynamo. A replica is 8 GPUs. Attention is data p
 
 Kimi K3 is served by TensorRT-LLM under Dynamo, the engine in the verified MLPerf Endpoints submission. A replica is 16 GPUs. Attention is context parallel, so the KV is split across the ranks. Experts follow the TEP16 layout. Each rank reads a 115 GB slice on every step. Four replicas use 64 GPUs. Eight GPUs remain.
 
-A prompt stays on one replica for the life of the hot prefix. The router uses the session key to return there.
+The sharding diagram is this one case: Kimi K3 on one Vera Rubin NVL72 rack with 1,048,576 tokens reserved. Four replicas use 16 GPUs each. Eight GPUs are outside a replica. Each rank holds the published 115 GB TEP16 weight slice, so a replica holds 1,840 GB and the rack holds 7,360 GB. One developer stores 14.93 GB of KV (13.90 GiB in `capacity/results.json`): 14.50 GB of FP8 MLA plus 0.43 GB of KDA state. Context parallel splits that across the 16 ranks, 0.933 GB per rank. The replica fits 167 developers, which is 155.83 GB of KV on the rank. With 16 GB of overhead, the 287.5 GB of rank HBM has 0.67 GB left, so the row is memory bound.
+
+A prompt stays on one replica for the life of the hot prefix. The router uses the session key to return there. On Kimi K3 every rank holds a shard of that prefix, and the expert all-to-all stays on NVLink.
 
 ## What this document does not claim
 

@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "Prompt path, hit and miss",
+    "title": "End to end prompt flow",
     "locale": "en",
     "output": "diagrams/request-flow.html",
     "quality_profile": "showcase"
@@ -10,37 +10,117 @@
   "lanes": [
     { "id": "client", "label": "Developer" },
     { "id": "edge", "label": "Edge" },
-    { "id": "serve", "label": "Dynamo" },
-    { "id": "state", "label": "KV and records" }
+    { "id": "stop", "label": "Rejected", "variant": "exception" },
+    { "id": "dynamo", "label": "Dynamo" },
+    { "id": "gpu", "label": "Workers" },
+    { "id": "kv", "label": "KV state" },
+    { "id": "log", "label": "Logging" }
   ],
-  "mainPath": ["ide", "gateway", "dynamo", "decode"],
+  "phases": [
+    { "id": "admit", "label": "Admit", "fromCol": 0, "toCol": 1 },
+    { "id": "route", "label": "Route", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "generate", "label": "Decode", "fromCol": 4, "toCol": 4 },
+    { "id": "respond", "label": "Return", "fromCol": 5, "toCol": 5 }
+  ],
+  "groups": [
+    { "id": "dynamo_plane", "label": "Dynamo control", "lane": "dynamo", "fromCol": 2, "toCol": 5, "variant": "emphasis" },
+    { "id": "kv_life", "label": "KV lifetime", "lane": "kv", "fromCol": 3, "toCol": 4 }
+  ],
+  "mainPath": ["ide", "gw", "front", "router", "decode", "out", "sample", "reply"],
   "nodes": [
     { "id": "ide", "lane": "client", "col": 0, "type": "external", "label": "Agent IDE", "sublabel": "tool turn" },
-    { "id": "gateway", "lane": "edge", "col": 1, "type": "security", "label": "Gateway", "sublabel": "both APIs" },
-    { "id": "sso", "lane": "edge", "col": 2, "type": "security", "label": "Keycloak", "sublabel": "developer token" },
-    { "id": "guard", "lane": "edge", "col": 0, "type": "security", "label": "Guardrails", "sublabel": "request policy" },
-    { "id": "dynamo", "lane": "serve", "col": 2, "type": "backend", "label": "Dynamo", "sublabel": "session key" },
-    { "id": "prefill", "lane": "serve", "col": 3, "type": "backend", "label": "Prefill", "sublabel": "cold context" },
-    { "id": "decode", "lane": "serve", "col": 4, "type": "backend", "label": "Decode", "sublabel": "vLLM or TRT" },
-    { "id": "kv", "lane": "state", "col": 3, "type": "database", "label": "HBM cache", "sublabel": "hot prefix" },
-    { "id": "grace", "lane": "state", "col": 4, "type": "database", "label": "Grace KV", "sublabel": "paused copy" },
-    { "id": "logs", "lane": "state", "col": 1, "type": "external", "label": "Prompt log", "sublabel": "text and timing" }
+    { "id": "reply", "lane": "client", "col": 5, "type": "frontend", "label": "IDE stream", "sublabel": "tokens and tools" },
+    { "id": "spire", "lane": "edge", "col": 0, "type": "security", "label": "SPIRE", "sublabel": "CPU identity" },
+    { "id": "kc", "lane": "edge", "col": 1, "type": "security", "label": "Keycloak", "sublabel": "OIDC token", "yOffset": -96 },
+    { "id": "gw", "lane": "edge", "col": 1, "type": "security", "label": "Gateway", "sublabel": "both APIs" },
+    { "id": "guard", "lane": "edge", "col": 1, "type": "security", "label": "Guardrails", "sublabel": "input policy", "yOffset": 96 },
+    { "id": "sample", "lane": "edge", "col": 5, "type": "security", "label": "Output sample", "sublabel": "not per token" },
+    { "id": "deny", "lane": "stop", "col": 0, "type": "security", "label": "Denied", "sublabel": "no GPU work" },
+    { "id": "front", "lane": "dynamo", "col": 2, "type": "backend", "label": "Frontend", "sublabel": "OpenAI API" },
+    { "id": "events", "lane": "dynamo", "col": 3, "type": "messagebus", "label": "KV events", "sublabel": "block index", "yOffset": -110 },
+    { "id": "router", "lane": "dynamo", "col": 3, "type": "backend", "label": "KV router", "sublabel": "prefix owner" },
+    { "id": "plan", "lane": "dynamo", "col": 3, "type": "backend", "label": "Planner", "sublabel": "hit or cold", "yOffset": 110 },
+    { "id": "out", "lane": "dynamo", "col": 5, "type": "backend", "label": "Stream out", "sublabel": "SSE chunks" },
+    { "id": "prefill", "lane": "gpu", "col": 3, "type": "backend", "label": "Prefill", "sublabel": "cold context" },
+    { "id": "decode", "lane": "gpu", "col": 4, "type": "backend", "label": "Decode", "sublabel": "vLLM or TRT" },
+    { "id": "kvbm", "lane": "kv", "col": 3, "type": "database", "label": "KV manager", "sublabel": "block placement", "yOffset": -40 },
+    { "id": "nixl", "lane": "kv", "col": 4, "type": "messagebus", "label": "NIXL", "sublabel": "KV transfer", "yOffset": -40 },
+    { "id": "hbm", "lane": "kv", "col": 4, "type": "database", "label": "HBM cache", "sublabel": "under 60 s", "yOffset": -130 },
+    { "id": "grace", "lane": "kv", "col": 4, "type": "database", "label": "Grace copy", "sublabel": "up to 15 min", "yOffset": 50 },
+    { "id": "nvme", "lane": "kv", "col": 4, "type": "database", "label": "Rack NVMe", "sublabel": "after 15 min", "yOffset": 140 },
+    { "id": "reqlog", "lane": "log", "col": 1, "type": "database", "label": "Request log", "sublabel": "prompt, decision" },
+    { "id": "timelog", "lane": "log", "col": 5, "type": "database", "label": "Timing log", "sublabel": "TTFT, tokens" }
   ],
   "edges": [
-    { "id": "submit", "from": "ide", "to": "gateway", "label": "prompt", "variant": "emphasis", "role": "main" },
-    { "id": "auth", "from": "gateway", "to": "sso", "label": "OIDC", "variant": "security", "role": "branch" },
-    { "id": "policy", "from": "gateway", "to": "guard", "label": "check", "variant": "security", "role": "branch" },
-    { "id": "admit", "from": "gateway", "to": "dynamo", "label": "admitted", "variant": "emphasis", "role": "main" },
-    { "id": "hit", "from": "dynamo", "to": "decode", "label": "cache hit", "variant": "emphasis", "role": "main" },
-    { "id": "miss", "from": "dynamo", "to": "prefill", "label": "cache miss", "variant": "default", "role": "branch" },
-    { "id": "fill", "from": "prefill", "to": "kv", "label": "write KV", "variant": "default", "role": "branch" },
-    { "id": "hand", "from": "kv", "to": "decode", "label": "NIXL", "variant": "emphasis", "role": "branch" },
-    { "id": "park", "from": "decode", "to": "grace", "label": "pause", "variant": "dashed", "role": "async" },
-    { "id": "record", "from": "gateway", "to": "logs", "label": "record", "variant": "dashed", "role": "async" }
+    { "id": "submit", "from": "ide", "to": "gw", "label": "prompt", "variant": "emphasis", "role": "main" },
+    { "id": "auth", "from": "gw", "to": "kc", "label": "OIDC", "variant": "security", "role": "branch" },
+    { "id": "policy", "from": "gw", "to": "guard", "label": "input check", "variant": "security", "role": "branch" },
+    { "id": "ident", "from": "spire", "to": "gw", "label": "SVID", "variant": "security", "role": "branch" },
+    { "id": "reject", "from": "guard", "to": "deny", "label": "deny", "variant": "security", "role": "error" },
+    { "id": "admit", "from": "gw", "to": "front", "label": "session key", "variant": "emphasis", "role": "main" },
+    { "id": "record", "from": "gw", "to": "reqlog", "label": "prompt, decision", "variant": "dashed", "role": "async" },
+    { "id": "front_id", "from": "spire", "to": "front", "label": "writer ID", "variant": "security", "role": "branch" },
+    { "id": "route", "from": "front", "to": "router", "label": "admit", "variant": "emphasis", "role": "main", "fromSide": "right", "toSide": "left" },
+    { "id": "index", "from": "events", "to": "router", "label": "KV index", "variant": "dashed", "role": "branch", "fromSide": "bottom", "toSide": "top" },
+    { "id": "hit", "from": "router", "to": "decode", "label": "cache hit", "variant": "emphasis", "role": "main", "fromSide": "right", "toSide": "top" },
+    { "id": "choose", "from": "router", "to": "plan", "label": "choose", "variant": "default", "role": "branch", "fromSide": "bottom", "toSide": "top" },
+    { "id": "miss", "from": "plan", "to": "prefill", "label": "cache miss", "variant": "default", "role": "branch" },
+    { "id": "alloc", "from": "prefill", "to": "kvbm", "label": "new blocks", "variant": "default", "role": "branch" },
+    { "id": "move", "from": "kvbm", "to": "nixl", "label": "place", "variant": "default", "role": "branch", "fromSide": "right", "toSide": "left" },
+    { "id": "hot", "from": "nixl", "to": "hbm", "label": "hot KV", "variant": "emphasis", "role": "branch", "fromSide": "top", "toSide": "bottom" },
+    { "id": "read", "from": "hbm", "to": "decode", "label": "prefix", "variant": "emphasis", "role": "branch", "fromSide": "top", "toSide": "bottom" },
+    { "id": "park", "from": "nixl", "to": "grace", "label": "pause", "variant": "dashed", "role": "async" },
+    { "id": "evict", "from": "grace", "to": "nvme", "label": "15 min", "variant": "dashed", "role": "async" },
+    { "id": "tokens", "from": "decode", "to": "out", "label": "token deltas", "variant": "emphasis", "role": "main" },
+    { "id": "chunks", "from": "out", "to": "sample", "label": "stream", "variant": "emphasis", "role": "main" },
+    { "id": "done", "from": "sample", "to": "reply", "label": "SSE", "variant": "emphasis", "role": "main" },
+    { "id": "times", "from": "out", "to": "timelog", "label": "TTFT, tokens", "variant": "dashed", "role": "async" }
   ],
   "cards": [
-    { "dot": "emerald", "title": "Cache hit", "items": ["The session key returns the worker that holds the prefix", "Only the new suffix is prefilled", "Tokens and tool-call deltas stream back"] },
-    { "dot": "amber", "title": "Cache miss", "items": ["A cold 200k or 1M context is prefilled on that replica", "NIXL places the new KV on the decode worker", "The first token time is the cold figure in the table"] },
-    { "dot": "cyan", "title": "Records", "items": ["Keycloak identifies the developer", "The prompt, the decision, and token timings are logged", "Guardrails run on the request, not on each output token"] }
+    {
+      "dot": "emerald",
+      "title": "Cache hit",
+      "items": [
+        "KV events name the worker that still holds the prefix",
+        "The router returns the turn to that worker",
+        "The worker prefills only the new suffix, then decodes"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Cache miss",
+      "items": [
+        "The planner sends a cold context to prefill",
+        "The KV manager allocates blocks and NIXL places them on the decode worker",
+        "A cold 1M admission is the only path that uses a separate prefill worker"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Logging",
+      "items": [
+        "The gateway writes the developer, the prompt, and the allow or deny before any GPU work",
+        "Stream out writes TTFT and token counts as chunks return",
+        "SPIRE identifies the gateway and the frontend. GPU pods have no sidecar"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Response",
+      "items": [
+        "Decode emits token and tool-call deltas to the Dynamo frontend",
+        "The gateway samples the output. Guardrails do not run on each token",
+        "The IDE receives one SSE stream on the same API it called"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Away from the keyboard",
+      "items": [
+        "Under 60 seconds the KV stays in HBM",
+        "Up to 15 minutes, NIXL parks a copy on Grace and the GPU seat can be reused",
+        "After 15 minutes the copy moves to rack NVMe and the next prompt is a new logged admission"
+      ]
+    }
   ]
 }

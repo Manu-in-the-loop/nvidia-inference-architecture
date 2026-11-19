@@ -28,7 +28,7 @@ Edit `capacity/scenarios.yaml` for usage, context, and cache policy. Edit `capac
 These open as live pages:
 
 - [Rack, network, and KV placement](https://manu-in-the-loop.github.io/nvidia-inference-architecture/diagrams/infrastructure.html)
-- [Prompt path, hit and miss](https://manu-in-the-loop.github.io/nvidia-inference-architecture/diagrams/request-flow.html)
-- [Weight sharding and the prompt path](https://manu-in-the-loop.github.io/nvidia-inference-architecture/diagrams/parallelism.html)
+- [End to end prompt flow](https://manu-in-the-loop.github.io/nvidia-inference-architecture/diagrams/request-flow.html)
+- [Kimi K3 on Vera Rubin at 1M](https://manu-in-the-loop.github.io/nvidia-inference-architecture/diagrams/parallelism.html)
 
 The JSON file next to each HTML page in `diagrams/` is the source for that diagram.

@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "receiptId": "6d15aab5-a1bd-4f60-9597-6c1f2c0ab9bf",
+  "receiptId": "de6b706d-e9b1-4b7d-bb30-84dee9497c13",
   "status": "current",
   "command": "deliver",
   "type": "architecture",
   "input": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/parallelism.architecture.json",
   "output": "/Users/mjoy/Projects/nvidia-inference-architecture/diagrams/parallelism.html",
   "specification": {
-    "sha256": "648c9cc1fbc1b0e5e6b31bb990967fdf874f4a1f00818f8829bb466aa1e77bd9",
-    "bytes": 2378
+    "sha256": "0deaebe98329ebb0beaf220bbba8889e429c1dc0172a69599260d28261d1c7ca",
+    "bytes": 4108
   },
   "artifact": {
-    "sha256": "6e6751cc213ad1cbc715169ab1cd73bd616246ea01ab08ee4ad79d82ebb57b6d",
-    "bytes": 836784
+    "sha256": "5ef43f59140d726698ab5adfc52a14ecadf7949ed27425ea2fb3c6e67df27e7e",
+    "bytes": 846931
   }
 }
